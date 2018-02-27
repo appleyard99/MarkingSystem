@@ -9,7 +9,6 @@ import java.util.Date;
  */
 public class FavoriteVo {
 
-
     private Integer questionbankid;
     private Integer schoolid;
     private Byte type;
