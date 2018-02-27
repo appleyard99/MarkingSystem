@@ -1,0 +1,8 @@
+tblsplit:
+  examresult:
+    #- starttime: 2017-11-01 00:00:00
+    #  endtime: 2017-12-01 00:00:00
+    #  num: 8
+    - starttime: 2017-11-01 00:00:00
+      endtime:
+      num: 8
