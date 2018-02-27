@@ -1,19 +1,21 @@
 package com.education.service.impl;
-import com.education.domain.Favorite;
-import com.education.domain.FavoriteTag;
-import com.education.domain.QbKnowledge;
+
+import com.education.domain.dto.FavoriteDTO;
 import com.education.domain.vo.FavoriteVo;
 import com.education.domain.vo.QbKnowledgeVo;
 import com.education.mapper.FavoriteMapper;
 import com.education.mapper.QbKnowledgeMapper;
 import com.education.service.IFavoriteService;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class FavoriteService implements IFavoriteService {
@@ -23,15 +25,12 @@ public class FavoriteService implements IFavoriteService {
     @Autowired
     private QbKnowledgeMapper qbKMapper;
 
-
-
    /* @Override
     public List<Favorite> findAllFavorites1() {
     return favoriteMapper.selectAll();
     }*/
 
     /**
-     * @description:获取用户
      * @param userId
      * @param type
      * @param subjectId
@@ -39,73 +38,45 @@ public class FavoriteService implements IFavoriteService {
      * @param pageLine
      * @param tagId
      * @return
+     * @description:获取用户
      */
-    public List<FavoriteVo> getAllFavorites(Integer userId,Integer type,Integer subjectId,Integer page,Integer pageLine,Integer tagId){
+    public List<FavoriteDTO> getAllFavorites(Integer userId, Integer type, Integer subjectId, Integer page, Integer pageLine, Integer tagId) {
         //获取用户收藏的题目
-        List<FavoriteVo> dataList = new ArrayList();;
-        page = (page-1)*pageLine;
-        if(1==type) {
+        List<FavoriteVo> dataList = new ArrayList();
+        page = (page - 1) * pageLine;
+        if (1 == type) {
             dataList = favoriteMapper.findAllFavorites(userId, subjectId, page, pageLine, tagId);
         }
-
-        if(!dataList.isEmpty() &&dataList.size() > 0)
-        {
-            Map<Integer,FavoriteVo> FavoritesMap= new HashMap<>();
-            //转Map结构;
-            for (FavoriteVo favorite:dataList) {
-                FavoritesMap.put(favorite.getQuestionbankid(),favorite);
-            }
-            Set<Integer> set=FavoritesMap.keySet();
-            List<Integer> list1=new ArrayList<Integer>();
-            list1.addAll(set);
-            List<QbKnowledgeVo> qbkList= new ArrayList<QbKnowledgeVo>();
-            qbkList=qbKMapper.selectSome(list1);
-            //qbkList转Map key=>value questionbankid=>listData;
-            Map<Integer,List<QbKnowledgeVo>> qbkMap = new HashMap<>();
-            if(!qbkList.isEmpty()&&qbkList.size()>0){
-
-                for(QbKnowledgeVo qbkItem : qbkList){
-                    //qbkMap.put(qbkItem.getQuestionbankid(),qbkItem);
-                    Integer qbid = qbkItem.getQuestionbankid();
-                    if(qbkMap.containsKey(qbid)){
-                        List<QbKnowledgeVo> tmpList = (List<QbKnowledgeVo>) qbkMap.get(qbid);
-                        tmpList.add(qbkItem);
-                        System.out.print(tmpList.isEmpty());
-                        qbkMap.put(qbid,tmpList);
-                    }else{
-                        List<QbKnowledgeVo> init = Lists.newArrayList();
-                        init.add(qbkItem);
-                        qbkMap.put(qbid, init);
-                        qbkMap.put(qbid, Lists.newArrayList(qbkItem));
-                    }
-
-                }
-
-
-
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-            /*for(Map.Entry<Integer,FavoriteVo> entry:FavoritesMap.entrySet()){
-                System.out.print("Key =" +entry.getKey() +",Value=" +entry.getValue());
-            }*/
-
+        Map<Integer, FavoriteVo> FavoritesMap = Maps.newHashMap();
+        //转Map结构
+        List<Integer> querylist = Lists.newArrayList();
+        for (FavoriteVo favorite : dataList) {
+            FavoritesMap.put(favorite.getQuestionbankid(), favorite);
+            querylist.add(favorite.getQuestionbankid());
         }
-
-        return dataList;
+        List<FavoriteDTO> ret = Lists.newArrayList();
+        if (dataList.size() > 0) {
+            List<QbKnowledgeVo> qbkList = qbKMapper.selectSome(querylist);
+            HashMap<Integer, List<QbKnowledgeVo>> qbkmap = Maps.newHashMap();
+            for (QbKnowledgeVo qbKnowledge : qbkList) {
+                int qid = qbKnowledge.getQuestionbankid();
+                if (!qbkmap.containsKey(qid)) {
+                    qbkmap.put(qid, Lists.newArrayList());
+                }
+                List<QbKnowledgeVo> tmp = qbkmap.get(qid);
+                tmp.add(qbKnowledge);
+                qbkmap.put(qid, tmp);
+            }
+            for (FavoriteVo fv : dataList) {
+                FavoriteDTO dto = new FavoriteDTO();
+                //不想一个个设置，可以直接拷贝属性
+                BeanUtils.copyProperties(fv, dto);
+                dto.setKnowinfo(qbkmap.get(fv.getQuestionbankid()));
+                ret.add(dto);
+            }
+        }
+        return ret;
     }
-
-
 
 
 }
