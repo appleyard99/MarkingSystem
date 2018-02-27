@@ -7,9 +7,11 @@ import com.education.domain.vo.QbKnowledgeVo;
 import com.education.mapper.FavoriteMapper;
 import com.education.mapper.QbKnowledgeMapper;
 import com.education.service.IFavoriteService;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
 
 import java.util.*;
 
@@ -58,42 +60,34 @@ public class FavoriteService implements IFavoriteService {
             list1.addAll(set);
             List<QbKnowledgeVo> qbkList= new ArrayList<QbKnowledgeVo>();
             qbkList=qbKMapper.selectSome(list1);
-            /*
-            //String idStr = StringUtils.collectionToDelimitedString(list1, ",");//获取题目的id串;
-            if(!qbkList.isEmpty()&&qbkList.size()>0)
-            {
-                Map<Integer,QbKnowledgeVo> qbkMap = new HashMap<>();
+            //qbkList转Map key=>value questionbankid=>listData;
+            Map<Integer,List<QbKnowledgeVo>> qbkMap = new HashMap<>();
+            if(!qbkList.isEmpty()&&qbkList.size()>0){
+
                 for(QbKnowledgeVo qbkItem : qbkList){
-                    qbkMap.put(qbkItem.getQuestionbankid(),qbkItem);
-                    //System.Out.print("id="+qbkItem.getQuestionbankid());
-
-                }
-                //System.out.print(qbkMap.isEmpty());
-            }*/
-            Integer qid=0;
-            Map<Integer, Map<String, Object>> favorite1Map = new TreeMap<>();
-            for (FavoriteVo favorite1:dataList){
-
-                qid=favorite1.getQuestionbankid();
-                List<Object> qkItemList = new ArrayList<>();
-                //转MAP;
-                //Map<String, Object> dataMap = new HashMap<>();
-                //dataMap.put("favorite",favorite1);
-                //获取知识点相关;
-                if(!qbkList.isEmpty()&&qbkList.size()>0) {
-                    for (QbKnowledgeVo qbkItem : qbkList) {
-                        if(qid==qbkItem.getQuestionbankid()){
-                            qkItemList.add(qbkItem);
-
-                        }
+                    //qbkMap.put(qbkItem.getQuestionbankid(),qbkItem);
+                    Integer qbid = qbkItem.getQuestionbankid();
+                    if(qbkMap.containsKey(qbid)){
+                        List<QbKnowledgeVo> tmpList = (List<QbKnowledgeVo>) qbkMap.get(qbid);
+                        tmpList.add(qbkItem);
+                        System.out.print(tmpList.isEmpty());
+                        qbkMap.put(qbid,tmpList);
+                    }else{
+                        List<QbKnowledgeVo> init = Lists.newArrayList();
+                        init.add(qbkItem);
+                        qbkMap.put(qbid, init);
+                        qbkMap.put(qbid, Lists.newArrayList(qbkItem));
                     }
-                    System.out.print(qkItemList.isEmpty());
+
                 }
 
 
-                System.out.print(favorite1Map.isEmpty());
+
             }
-            System.out.print("aaa");
+
+
+
+
 
 
 
